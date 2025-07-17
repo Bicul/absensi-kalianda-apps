@@ -1,0 +1,294 @@
+/* General Body and Font Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #1a1a2e; /* Dark background */
+    color: #e0e0e0; /* Light text color */
+}
+
+/* Class to prevent scrolling */
+body.no-scroll {
+    overflow: hidden;
+}
+
+/* Login Container Styles */
+#login-container {
+    /* Removed position: fixed; and related properties */
+    /* It will now be part of the normal document flow */
+    /* The d-flex, justify-content-center, align-items-center, min-vh-100 classes in HTML will handle centering and full height */
+    background-color: #1a1a2e; /* Match body background for seamless transition */
+}
+
+
+/* Specific Card Styles for Dark Mode */
+.card.card-dark {
+    background-color: #2a2a4a; /* Darker card background */
+    color: #e0e0e0;
+    border: 1px solid #3a3a5a;
+}
+
+.card.card-dark-light {
+    background-color: #3a3a5a; /* Slightly lighter dark card background */
+    color: #e0e0e0;
+    border: 1px solid #4a4a6a;
+}
+
+/* Form Control Styles for Dark Mode */
+.form-control.form-control-dark,
+.form-select.form-select-dark {
+    background-color: #3a3a5a;
+    color: #e0e0e0;
+    border-color: #5a5a7a;
+}
+
+.form-control.form-control-dark::placeholder {
+    color: #a0a0a0;
+}
+
+.form-control.form-control-dark:focus,
+.form-select.form-select-dark:focus {
+    background-color: #3a3a5a;
+    color: #e0e0e0;
+    border-color: #6a6a8a;
+    box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25); /* Bootstrap secondary color shadow */
+}
+
+/* Table Styles for Dark Mode */
+.table {
+    color: #e0e0e0; /* Default text color for table */
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.1); /* Slightly darker stripe */
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.2); /* Even darker on hover */
+}
+
+.table-bordered {
+    border-color: #4a4a6a;
+}
+
+.table-bordered th,
+.table-bordered td {
+    border-color: #4a4a6a;
+}
+
+/* Navbar and Button Styles */
+.navbar {
+    background-image: linear-gradient(to right, #2c5364, #203a43, #0f2027); /* Gradient for navbar */
+}
+
+.btn-outline-light {
+    border-color: #f8f9fa;
+    color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004a99;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529; /* Ensure text is dark for visibility */
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #cc9500;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Custom Purple for Sakit */
+.btn-purple {
+    background-color: #6f42c1; /* Bootstrap's purple */
+    border-color: #6f42c1;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.btn-purple:hover {
+    background-color: #5d35a3;
+    border-color: #573199;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
+}
+
+
+/* Badge Styles */
+.badge {
+    padding: 0.5em 0.75em;
+    border-radius: 0.5rem; /* More rounded badges */
+    font-weight: 600;
+}
+
+/* Custom Badge Colors for Absensi Status */
+.badge.bg-purple {
+    background-color: #6f42c1 !important; /* Ensure custom purple overrides Bootstrap */
+}
+.badge.bg-light.text-dark {
+    background-color: #e9ecef !important; /* Light background for 'Libur' */
+    color: #212529 !important;
+}
+
+
+/* Table cell status colors for Rekap Absensi */
+.status-V { background-color: #28a745; color: white; } /* Hadir */
+.status-TL { background-color: #ffc107; color: black; } /* Terlambat */
+.status-PSW { background-color: #dc3545; color: white; } /* Pulang Sebelum Waktunya */
+.status-C { background-color: #17a2b8; color: white; } /* Cuti */
+.status-I { background-color: #007bff; color: white; } /* Izin (menggunakan primary) */
+.status-S { background-color: #6f42c1; color: white; } /* Sakit (menggunakan purple) */
+.status-A { background-color: #343a40; color: white; } /* Alpa */
+.status-off { background-color: #6c757d; color: white; } /* Libur (menggunakan secondary) */
+.status-empty { background-color: #4a4a6a; color: #a0a0a0; } /* No data / default empty */
+
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    .navbar-nav {
+        text-align: center;
+    }
+    .navbar-nav .nav-item {
+        margin-bottom: 0.5rem;
+    }
+    .btn-outline-light, .btn-danger {
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.25rem;
+    }
+    .display-5 {
+        font-size: 2.5rem;
+    }
+    .col-md-3, .col-lg-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    .d-flex.flex-wrap.gap-2 {
+        justify-content: center;
+    }
+    .form-select-sm, .form-control-sm {
+        font-size: 0.875rem;
+    }
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    }
+    /* Adjust table headers for smaller screens */
+    .table th {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+    .table td {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+    .day-header {
+        font-size: 0.65rem; /* Smaller font for day headers in rekap table */
+    }
+}
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2a2a4a; /* Dark track */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #5a5a7a; /* Darker thumb */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6a6a8a; /* Even darker on hover */
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #5a5a7a #2a2a4a;
+}
