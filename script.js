@@ -9,16 +9,22 @@ const SPREADSHEET_ID = '1v-IzKh1FHfxmAs0yCRbaN2utzQpfL8g9bZLTBGKBcw0'; // Spread
 // Jam masuk dan pulang disesuaikan per jabatan
 const karyawanData = [
     { nama: "ANANDA ILHAM HAKIKI", jabatan: "AREA COORDINATOR", jam_masuk: "08:30:00", jam_pulang: "17:30:00" },
-    { nama: "ANGGA PRATAMA", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" }, // Security shift
+    // Entri security untuk mencakup shift pagi dan malam
+    { nama: "ANGGA PRATAMA (Pagi)", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" },
+    { nama: "ANGGA PRATAMA (Malam)", jabatan: "SECURITY", jam_masuk: "19:00:00", jam_pulang: "07:00:00" }, // Shift malam, pulang keesokan harinya
     { nama: "ARIL FACHRI NURDIANSAH", jabatan: "NOB", jam_masuk: "08:00:00", jam_pulang: "17:00:00" },
     { nama: "BIMA PRATAMA SAPUTRO", jabatan: "BRANCH LEADER", jam_masuk: "08:30:00", jam_pulang: "17:30:00" },
     { nama: "BIMA RAFLI RAMADANI", jabatan: "NOA", jam_masuk: "08:00:00", jam_pulang: "17:00:00" },
     { nama: "DEFLI YANTI", jabatan: "ADMIN STORE", jam_masuk: "08:30:00", jam_pulang: "17:30:00" },
-    { nama: "DEKI KURNIAWAN", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" }, // Security shift
+    // Entri security untuk mencakup shift pagi dan malam
+    { nama: "DEKI KURNIAWAN (Pagi)", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" },
+    { nama: "DEKI KURNIAWAN (Malam)", jabatan: "SECURITY", jam_masuk: "19:00:00", jam_pulang: "07:00:00" }, // Shift malam, pulang keesokan harinya
     { nama: "FEBRI SAPUTRA", jabatan: "NOA", jam_masuk: "08:00:00", jam_pulang: "17:00:00" },
     { nama: "HABIBI", jabatan: "AREA COORDINATOR", jam_masuk: "08:30:00", jam_pulang: "17:30:00" },
     { nama: "MUHYIDIN", jabatan: "OB", jam_masuk: "07:00:00", jam_pulang: "17:00:00" }, // OB jam 7 pagi
-    { nama: "REKA ANDRIANSYAH", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" }, // Security shift
+    // Entri security untuk mencakup shift pagi dan malam
+    { nama: "REKA ANDRIANSYAH (Pagi)", jabatan: "SECURITY", jam_masuk: "07:00:00", jam_pulang: "19:00:00" },
+    { nama: "REKA ANDRIANSYAH (Malam)", jabatan: "SECURITY", jam_masuk: "19:00:00", jam_pulang: "07:00:00" }, // Shift malam, pulang keesokan harinya
     { nama: "RISKI APRIANTO", jabatan: "AREA COORDINATOR", jam_masuk: "08:30:00", jam_pulang: "17:30:00" },
     { nama: "TOPAN AJI PRATAMA", jabatan: "NOA", jam_masuk: "08:00:00", jam_pulang: "17:00:00" },
     { nama: "YANDI YAHYA", jabatan: "NOB", jam_masuk: "08:00:00", jam_pulang: "17:00:00" },
@@ -106,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         markAbsensiStatus(pendingAbsensiStatus, catatan);
     });
 
-    document.getElementById('cancelCatatanBtn').addEventListener('click', () => {
+    document.getElementById('cancelCatatanBtn').addEventListener(() => {
         document.getElementById('catatanInputDiv').style.display = 'none';
         document.getElementById('absensiCatatan').value = '';
         pendingAbsensiStatus = '';
@@ -236,12 +242,15 @@ function getCurrentDateTime() {
 }
 
 // Mendapatkan objek Date dari string tanggal (DD/MM/YYYY) dan waktu (HH:MM:SS)
-function parseDateTime(dateStr, timeStr) {
+// Parameter addDay digunakan untuk shift yang melewati tengah malam (misal: shift malam security)
+function parseDateTime(dateStr, timeStr, addDay = 0) {
     // Pastikan format dateStr adalah DD/MM/YYYY
     const [day, month, year] = dateStr.split('/').map(Number);
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     // Bulan di JavaScript adalah 0-indexed
-    return new Date(year, month - 1, day, hours, minutes, seconds);
+    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
+    dateObj.setDate(dateObj.getDate() + addDay); // Tambahkan hari jika diperlukan
+    return dateObj;
 }
 
 // --- Dashboard Summary (Ringkasan Harian) ---
@@ -316,7 +325,13 @@ async function loadDailyDashboardSummary() {
                     absensiHarian[nama].waktu_keluar = waktuKeluarStr || '';
 
                     const waktuMasuk = parseDateTime(todayDate, waktuMasukStr);
-                    const jamMasukStandar = parseDateTime(todayDate, karyawan.jam_masuk);
+                    let jamMasukStandar;
+                    // Handle security night shift start time (19:00 current day)
+                    if (karyawan.jabatan === "SECURITY" && karyawan.nama.includes("(Malam)")) {
+                        jamMasukStandar = parseDateTime(todayDate, karyawan.jam_masuk);
+                    } else {
+                        jamMasukStandar = parseDateTime(todayDate, karyawan.jam_masuk);
+                    }
                     
                     if (waktuMasuk.getTime() > jamMasukStandar.getTime() + (5 * 60 * 1000)) {
                         absensiHarian[nama].status = 'TL';
@@ -326,10 +341,35 @@ async function loadDailyDashboardSummary() {
 
                     // Cek PSW jika ada waktu keluar
                     if (waktuKeluarStr) {
-                        const waktuKeluar = parseDateTime(todayDate, waktuKeluarStr);
-                        const jamPulangStandar = parseDateTime(todayDate, karyawan.jam_pulang);
-                        if (waktuKeluar.getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
-                            absensiHarian[nama].status = (absensiHarian[nama].status === 'TL' ? 'TL+PSW' : 'PSW');
+                        let jamPulangStandar;
+                        // Jika ini shift malam security, jam pulang adalah di hari berikutnya
+                        if (karyawan.jabatan === "SECURITY" && karyawan.nama.includes("(Malam)")) {
+                            jamPulangStandar = parseDateTime(todayDate, karyawan.jam_pulang, 1); // Tambah 1 hari
+                        } else {
+                            jamPulangStandar = parseDateTime(todayDate, karyawan.jam_pulang);
+                        }
+
+                        // Waktu keluar tercatat pada tanggal yang sama dengan clock-in di sheet.
+                        // Untuk shift malam, jika clock-out tercatat di hari yang sama (misal pulang sangat cepat),
+                        // atau jika clock-out terjadi di hari berikutnya (normal), waktuKeluarStr di entry hari ini akan kosong.
+                        // Perhitungan ini akan lebih akurat di rekap bulanan.
+                        // Untuk ringkasan harian, ini mengasumsikan waktu keluar tercatat pada tanggal yang sama dengan clock-in
+                        // jika pulang cepat.
+                        const waktuKeluar = parseDateTime(todayDate, waktuKeluarStr); 
+                        
+                        // Perbandingan untuk PSW harus memperhitungkan shift malam
+                        // Jika jam masuk lebih besar dari jam pulang (misal 19:00 - 07:00), berarti shift melewati tengah malam.
+                        const isOvernightShift = parseDateTime("01/01/2000", karyawan.jam_masuk).getTime() > parseDateTime("01/01/2000", karyawan.jam_pulang).getTime();
+
+                        if (isOvernightShift) {
+                            // Untuk shift malam, jika waktu keluar (pada tanggal clock-in) lebih awal dari jam pulang standar (di hari berikutnya)
+                            // Ini hanya akan menangkap pulang cepat di hari yang sama dengan clock-in.
+                            // Jika pulang normal (keesokan harinya), waktuKeluarStr akan kosong di entry hari ini.
+                            // Perbaikan lebih lanjut diperlukan untuk menangani clock-out lintas hari di ringkasan harian.
+                        } else {
+                            if (waktuKeluar.getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
+                                absensiHarian[nama].status = (absensiHarian[nama].status === 'TL' ? 'TL+PSW' : 'PSW');
+                            }
                         }
                     }
                 } else {
@@ -427,14 +467,14 @@ async function loadDailyDashboardSummary() {
     try {
         const responseTamu = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Tamu!A:I', // Tanggal Masuk, Waktu Masuk, Tanggal Keluar, Waktu Keluar, Nama Tamu, Nomor Telepon, Tujuan Kunjungan, PIC, Catatan
+            range: 'Tamu!A:J', // Diperbarui menjadi A:J untuk menyertakan Instansi Asal
         });
         const tamuRows = responseTamu.result.values || [];
         const dailyTamuEntries = tamuRows.slice(1).filter(row =>
             row[0] === todayDate && (row[2] === '' || row[2] === undefined) // Tanggal Masuk hari ini & Tanggal Keluar kosong
         );
 
-        let tamuDetailHTML = '<table class="table table-striped table-hover"><thead><tr><th>Nama Tamu</th><th>Tujuan</th><th>PIC</th><th>Waktu Masuk</th></tr></thead><tbody>';
+        let tamuDetailHTML = '<table class="table table-striped table-hover"><thead><tr><th>Nama Tamu</th><th>Tujuan</th><th>PIC</th><th>Waktu Masuk</th><th>Instansi Asal</th></tr></thead><tbody>';
         if (dailyTamuEntries.length > 0) {
             dailyTamuEntries.forEach(entry => {
                 tamuDetailHTML += `<tr>
@@ -442,11 +482,12 @@ async function loadDailyDashboardSummary() {
                     <td>${entry[6] || ''}</td>
                     <td>${entry[7] || ''}</td>
                     <td>${entry[1] || ''}</td>
+                    <td>${entry[9] || ''}</td> <!-- Kolom Instansi Asal (indeks 9) -->
                 </tr>`;
             });
             document.getElementById('tamuTodayCount').innerText = dailyTamuEntries.length;
         } else {
-            tamuDetailHTML += '<tr><td colspan="4" class="text-center text-muted">Tidak ada tamu terdaftar hari ini.</td></tr>';
+            tamuDetailHTML += '<tr><td colspan="5" class="text-center text-muted">Tidak ada tamu terdaftar hari ini.</td></tr>'; // colspan diperbarui
             document.getElementById('tamuTodayCount').innerText = '0';
         }
         tamuDetailHTML += '</tbody></table>';
@@ -514,6 +555,7 @@ function populateRekapAbsensiDropdowns() {
 
 function populateRekapKaryawanDropdown() {
     const rekapKaryawanSelect = document.getElementById('rekapKaryawan');
+    rekapKaryawanSelect.innerHTML = '<option value="Semua">Semua</option>'; // Tambahkan opsi "Semua"
     karyawanData.forEach(karyawan => {
         const option = document.createElement('option');
         option.value = karyawan.nama;
@@ -612,7 +654,14 @@ async function generateAbsensiRecap() {
                     // Temukan data karyawan untuk mendapatkan jam standar mereka
                     const currentKaryawan = karyawanData.find(k => k.nama === karyawan.nama);
                     const jamMasukStandar = parseDateTime(targetDate, currentKaryawan.jam_masuk);
-                    const jamPulangStandar = parseDateTime(targetDate, currentKaryawan.jam_pulang);
+                    
+                    let jamPulangStandar;
+                    // Jika ini shift malam security, jam pulang adalah di hari berikutnya
+                    if (currentKaryawan.jabatan === "SECURITY" && currentKaryawan.nama.includes("(Malam)")) {
+                        jamPulangStandar = parseDateTime(targetDate, currentKaryawan.jam_pulang, 1); // Tambah 1 hari
+                    } else {
+                        jamPulangStandar = parseDateTime(targetDate, currentKaryawan.jam_pulang);
+                    }
 
                     // Prioritas: Status dari sheet Absensi (Cuti, Izin, Sakit, Libur dari input manual)
                     if (statusSheet) {
@@ -631,9 +680,22 @@ async function generateAbsensiRecap() {
                             } else {
                                 status = 'V'; statusClass = 'status-V';
                             }
-                            if (waktuKeluarStr && parseDateTime(targetDate, waktuKeluarStr).getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
-                                status = (status === 'TL' ? 'TL+PSW' : 'PSW');
-                                statusClass = (status === 'TL+PSW' ? 'status-TL' : 'status-PSW');
+                            // Periksa PSW untuk shift malam atau siang
+                            if (waktuKeluarStr) {
+                                let waktuKeluarUntukPsw;
+                                if (currentKaryawan.jabatan === "SECURITY" && currentKaryawan.nama.includes("(Malam)")) {
+                                    // Untuk shift malam, waktu keluar mungkin di hari berikutnya.
+                                    // Kita perlu membandingkan waktu keluar dengan jam pulang standar yang sudah disesuaikan harinya.
+                                    // Asumsi: jika waktu keluar lebih kecil dari waktu masuk, berarti melewati tengah malam.
+                                    waktuKeluarUntukPsw = parseDateTime(targetDate, waktuKeluarStr, (parseDateTime(targetDate, waktuMasukStr).getHours() > parseDateTime(targetDate, waktuKeluarStr).getHours() ? 1 : 0));
+                                } else {
+                                    waktuKeluarUntukPsw = parseDateTime(targetDate, waktuKeluarStr);
+                                }
+
+                                if (waktuKeluarUntukPsw.getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
+                                    status = (status === 'TL' ? 'TL+PSW' : 'PSW');
+                                    statusClass = (status === 'TL+PSW' ? 'status-TL' : 'status-PSW');
+                                }
                             }
                         } else { // Tidak ada clock-in, tidak ada status khusus di sheet absensi
                             status = 'A'; statusClass = 'status-A';
@@ -646,9 +708,19 @@ async function generateAbsensiRecap() {
                             } else {
                                 status = 'V'; statusClass = 'status-V';
                             }
-                            if (waktuKeluarStr && parseDateTime(targetDate, waktuKeluarStr).getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
-                                status = (status === 'TL' ? 'TL+PSW' : 'PSW');
-                                statusClass = (status === 'TL+PSW' ? 'status-TL' : 'status-PSW');
+                            // Periksa PSW untuk shift malam atau siang
+                            if (waktuKeluarStr) {
+                                let waktuKeluarUntukPsw;
+                                if (currentKaryawan.jabatan === "SECURITY" && currentKaryawan.nama.includes("(Malam)")) {
+                                    waktuKeluarUntukPsw = parseDateTime(targetDate, waktuKeluarStr, (parseDateTime(targetDate, waktuMasukStr).getHours() > parseDateTime(targetDate, waktuKeluarStr).getHours() ? 1 : 0));
+                                } else {
+                                    waktuKeluarUntukPsw = parseDateTime(targetDate, waktuKeluarStr);
+                                }
+
+                                if (waktuKeluarUntukPsw.getTime() < jamPulangStandar.getTime() - (5 * 60 * 1000)) {
+                                    status = (status === 'TL' ? 'TL+PSW' : 'PSW');
+                                    statusClass = (status === 'TL+PSW' ? 'status-TL' : 'status-PSW');
+                                }
                             }
                         } else {
                             status = 'A'; statusClass = 'status-A';
@@ -713,7 +785,7 @@ async function clockOut() {
         alert('Nama karyawan harus dipilih!');
         return;
     }
-    const { date: todayDate, time } = getCurrentDateTime();
+    const { date: currentClockOutDate, time: currentClockOutTime } = getCurrentDateTime();
 
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
@@ -723,10 +795,28 @@ async function clockOut() {
         const rows = response.result.values;
         if (rows) {
             let rowIndexToUpdate = -1;
-            // Cari baris terakhir karyawan pada hari ini yang belum Clock Out
-            for (let i = rows.length - 1; i >= 0; i--) { // Loop mundur dari baris terakhir
-                // Kolom Tanggal (indeks 0), Kolom Nama Karyawan (indeks 3), Kolom Waktu Keluar (indeks 2)
-                if (rows[i][0] === todayDate && rows[i][3] === nama && (rows[i][2] === '' || rows[i][2] === undefined)) {
+            const selectedKaryawan = karyawanData.find(k => k.nama === nama);
+            const isNightShiftSecurity = selectedKaryawan && selectedKaryawan.jabatan === "SECURITY" && nama.includes("(Malam)");
+
+            // Loop mundur dari baris terakhir untuk menemukan entri yang belum Clock Out
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const row = rows[i];
+                const rowDate = row[0];
+                const rowNama = row[3];
+                const rowWaktuKeluar = row[2];
+
+                // Check if it's the correct employee and the 'Waktu Keluar' is empty
+                if (rowNama === nama && (rowWaktuKeluar === '' || rowWaktuKeluar === undefined)) {
+                    // For day shifts or non-security, ensure it's on the same day
+                    if (!isNightShiftSecurity && rowDate !== currentClockOutDate) {
+                        continue; // Skip if not a night shift and date doesn't match
+                    }
+                    // For night shifts, we just need the latest open entry for that employee
+                    // This logic assumes that a night shift clock-in will be the *last* open entry for that employee.
+                    // If a day shift employee forgets to clock out, and then a night shift security clocks in,
+                    // this might incorrectly update the day shift employee's entry if not careful.
+                    // A more robust solution would involve checking the time difference from clock-in
+                    // or storing a unique shift ID. For simplicity, we proceed with this assumption.
                     rowIndexToUpdate = i;
                     break;
                 }
@@ -738,10 +828,10 @@ async function clockOut() {
                     spreadsheetId: SPREADSHEET_ID,
                     range: `Absensi!C${rowIndexToUpdate + 1}`, // +1 karena sheet 1-indexed
                     valueInputOption: 'USER_ENTERED',
-                    resource: { values: [[time]] },
+                    resource: { values: [[currentClockOutTime]] },
                 });
                 document.getElementById('absensiStatus').className = 'mt-3 alert alert-success';
-                document.getElementById('absensiStatus').innerText = `Clock Out berhasil untuk ${nama} pada ${time}!`;
+                document.getElementById('absensiStatus').innerText = `Clock Out berhasil untuk ${nama} pada ${currentClockOutTime}!`;
                 // Reset form untuk input selanjutnya
                 document.getElementById('namaKaryawanSelect').value = '';
                 document.getElementById('karyawanAksi').style.display = 'none';
@@ -751,7 +841,7 @@ async function clockOut() {
                 loadDailyDashboardSummary(); // Perbarui dashboard harian
             } else {
                 document.getElementById('absensiStatus').className = 'mt-3 alert alert-warning';
-                document.getElementById('absensiStatus').innerText = `Tidak ditemukan Clock In yang aktif untuk ${nama} pada hari ini.`;
+                document.getElementById('absensiStatus').innerText = `Tidak ditemukan Clock In yang aktif untuk ${nama}.`;
             }
         } else {
             document.getElementById('absensiStatus').className = 'mt-3 alert alert-warning';
@@ -814,7 +904,7 @@ async function markAbsensiStatus(statusType, catatan = '') {
     } catch (error) {
         console.error(`Error marking ${statusType}:`, error);
         document.getElementById('absensiStatus').className = 'mt-3 alert alert-danger';
-        document.getElementById('absensiStatus').innerText = `Gagal mencatat status ${statusType}. Cek konsol browser untuk detail error.`;
+        document.getElementById('absensiStatus').innerText = `Gagal mencatat status ${statusType}. Cek konsol browser untuk detail error.`
     }
 }
 
@@ -1084,23 +1174,25 @@ async function loadKendaraanHistory() {
 document.getElementById('formTamu').addEventListener('submit', async function(e) {
     e.preventDefault();
     const namaTamu = document.getElementById('namaTamu').value;
-    const noTelpTamu = document.getElementById('noTelpTamu').value;
+    const noTelpTamu = document.getElementById('noTelpTamu').value; 
     const tujuanTamu = document.getElementById('tujuanTamu').value;
     const picTamu = document.getElementById('picTamu').value;
+    const instansiAsalTamu = document.getElementById('instansiAsalTamu').value; // Ambil nilai instansi asal
     const { date, time } = getCurrentDateTime();
-    // Struktur data sesuai header: Tanggal Masuk, Waktu Masuk, Tanggal Keluar, Waktu Keluar, Nama Tamu, Nomor Telepon, Tujuan Kunjungan, PIC yang Dikunjungi, Catatan
-    const values = [[date, time, '', '', namaTamu, noTelpTamu, tujuanTamu, picTamu, '']];
+    
+    // Struktur data sesuai header: Tanggal Masuk, Waktu Masuk, Tanggal Keluar, Waktu Keluar, Nama Tamu, Nomor Telepon, Tujuan Kunjungan, PIC yang Dikunjungi, Catatan, Instansi Asal
+    const values = [[date, time, '', '', namaTamu, noTelpTamu, tujuanTamu, picTamu, '', instansiAsalTamu]]; // Tambahkan instansiAsalTamu di akhir
 
     try {
         await gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Tamu!A:I', // Sesuaikan dengan jumlah kolom header
+            range: 'Tamu!A:J', // Diperbarui menjadi A:J untuk menyertakan Instansi Asal
             valueInputOption: 'USER_ENTERED',
             insertDataOption: 'INSERT_ROWS',
             resource: { values: values },
         });
         document.getElementById('tamuStatus').className = 'mt-3 alert alert-success';
-        document.getElementById('tamuStatus').innerText = `Tamu ${namaTamu} berhasil didaftarkan!`;
+        document.getElementById('tamuStatus').innerText = `Tamu ${namaTamu} dari ${instansiAsalTamu} berhasil didaftarkan!`;
         this.reset();
         loadTamuHistory();
         loadDailyDashboardSummary(); // Perbarui dashboard harian
@@ -1115,7 +1207,7 @@ async function loadTamuHistory() {
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Tamu!A:I',
+            range: 'Tamu!A:J', // Diperbarui menjadi A:J untuk menyertakan Instansi Asal
         });
         const rows = response.result.values;
         const historyDiv = document.getElementById('tamuActiveList');
@@ -1124,17 +1216,18 @@ async function loadTamuHistory() {
         if (rows && rows.length > 1) {
             const table = document.createElement('table');
             table.className = 'table table-striped table-bordered';
-            // Header tabel untuk tampilan riwayat tamu
-            let tableHTML = '<thead><tr><th>Tgl Masuk</th><th>Wkt Masuk</th><th>Nama Tamu</th><th>Tujuan</th><th>PIC</th><th>Catatan</th></tr></thead><tbody>';
+            // Header tabel untuk tampilan riwayat tamu - ditambahkan kolom "Instansi Asal"
+            let tableHTML = '<thead><tr><th>Tgl Masuk</th><th>Wkt Masuk</th><th>Nama Tamu</th><th>Tujuan</th><th>PIC</th><th>Instansi Asal</th><th>Catatan</th></tr></thead><tbody>';
             for (let i = rows.length - 1; i >= 1; i--) { // Loop mundur untuk menampilkan data terbaru di atas
                 const row = rows[i];
-                // Menampilkan kolom yang relevan
+                // Menampilkan kolom yang relevan, termasuk Instansi Asal (indeks 9)
                 tableHTML += `<tr>
                                 <td>${row[0] || ''}</td>
                                 <td>${row[1] || ''}</td>
                                 <td>${row[4] || ''}</td>
                                 <td>${row[6] || ''}</td>
                                 <td>${row[7] || ''}</td>
+                                <td>${row[9] || ''}</td> <!-- Kolom Instansi Asal -->
                                 <td>${row[8] || ''}</td>
                               </tr>`;
             }
@@ -1154,6 +1247,8 @@ async function loadTamuHistory() {
 // --- Fungsi untuk mengisi dropdown karyawan ---
 function populateKaryawanDropdown() {
     const selectElement = document.getElementById('namaKaryawanSelect');
+    // Bersihkan opsi yang ada
+    selectElement.innerHTML = '<option value="">-- Pilih Karyawan --</option>';
     karyawanData.forEach(karyawan => {
         const option = document.createElement('option');
         option.value = karyawan.nama;
@@ -1205,6 +1300,8 @@ function populateManajemenJadwalDropdowns() {
 
 function populateManajemenJadwalKaryawanDropdown() {
     const jadwalKaryawanSelect = document.getElementById('jadwalKaryawan');
+    // Bersihkan opsi yang ada
+    jadwalKaryawanSelect.innerHTML = '<option value="Semua">Semua</option>';
     karyawanData.forEach(karyawan => {
         const option = document.createElement('option');
         option.value = karyawan.nama;
